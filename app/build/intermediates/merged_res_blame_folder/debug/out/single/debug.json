@@ -1,0 +1,50 @@
+[
+    {
+        "merged": "C:\\Users\\shail\\.gradle\\daemon\\8.2\\com.bluetoothseclab.app-merged_res-48:\\menu_main_menu.xml.flat",
+        "source": "C:\\Users\\shail\\.gradle\\daemon\\8.2\\com.bluetoothseclab.app-main-50:\\menu\\main_menu.xml"
+    },
+    {
+        "merged": "C:\\Users\\shail\\.gradle\\daemon\\8.2\\com.bluetoothseclab.app-merged_res-48:\\drawable_ic_launcher_background.xml.flat",
+        "source": "C:\\Users\\shail\\.gradle\\daemon\\8.2\\com.bluetoothseclab.app-main-50:\\drawable\\ic_launcher_background.xml"
+    },
+    {
+        "merged": "C:\\Users\\shail\\.gradle\\daemon\\8.2\\com.bluetoothseclab.app-merged_res-48:\\drawable_ic_launcher_foreground.xml.flat",
+        "source": "C:\\Users\\shail\\.gradle\\daemon\\8.2\\com.bluetoothseclab.app-main-50:\\drawable\\ic_launcher_foreground.xml"
+    },
+    {
+        "merged": "C:\\Users\\shail\\.gradle\\daemon\\8.2\\com.bluetoothseclab.app-merged_res-48:\\layout_item_device_card.xml.flat",
+        "source": "C:\\Users\\shail\\.gradle\\daemon\\8.2\\com.bluetoothseclab.app-main-50:\\layout\\item_device_card.xml"
+    },
+    {
+        "merged": "com.bluetoothseclab.app-merged_res-48:/layout_activity_device_detail.xml.flat",
+        "source": "com.bluetoothseclab.app-main-50:/layout/activity_device_detail.xml"
+    },
+    {
+        "merged": "C:\\Users\\shail\\.gradle\\daemon\\8.2\\com.bluetoothseclab.app-merged_res-48:\\layout_activity_main.xml.flat",
+        "source": "C:\\Users\\shail\\.gradle\\daemon\\8.2\\com.bluetoothseclab.app-main-50:\\layout\\activity_main.xml"
+    },
+    {
+        "merged": "com.bluetoothseclab.app-merged_res-48:/layout_activity_security_report.xml.flat",
+        "source": "com.bluetoothseclab.app-main-50:/layout/activity_security_report.xml"
+    },
+    {
+        "merged": "C:\\Users\\shail\\.gradle\\daemon\\8.2\\com.bluetoothseclab.app-merged_res-48:\\layout_activity_security_report.xml.flat",
+        "source": "C:\\Users\\shail\\.gradle\\daemon\\8.2\\com.bluetoothseclab.app-main-50:\\layout\\activity_security_report.xml"
+    },
+    {
+        "merged": "com.bluetoothseclab.app-merged_res-48:/layout_activity_main.xml.flat",
+        "source": "com.bluetoothseclab.app-main-50:/layout/activity_main.xml"
+    },
+    {
+        "merged": "C:\\Users\\shail\\.gradle\\daemon\\8.2\\com.bluetoothseclab.app-merged_res-48:\\drawable_device_icon_bg.xml.flat",
+        "source": "C:\\Users\\shail\\.gradle\\daemon\\8.2\\com.bluetoothseclab.app-main-50:\\drawable\\device_icon_bg.xml"
+    },
+    {
+        "merged": "C:\\Users\\shail\\.gradle\\daemon\\8.2\\com.bluetoothseclab.app-merged_res-48:\\layout_activity_device_detail.xml.flat",
+        "source": "C:\\Users\\shail\\.gradle\\daemon\\8.2\\com.bluetoothseclab.app-main-50:\\layout\\activity_device_detail.xml"
+    },
+    {
+        "merged": "C:\\Users\\shail\\.gradle\\daemon\\8.2\\com.bluetoothseclab.app-merged_res-48:\\mipmap-anydpi-v26_ic_launcher.xml.flat",
+        "source": "C:\\Users\\shail\\.gradle\\daemon\\8.2\\com.bluetoothseclab.app-main-50:\\mipmap-anydpi-v26\\ic_launcher.xml"
+    }
+]

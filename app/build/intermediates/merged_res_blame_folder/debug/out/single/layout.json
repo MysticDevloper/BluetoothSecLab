@@ -1,0 +1,30 @@
+[
+    {
+        "merged": "C:\\Users\\shail\\.gradle\\daemon\\8.2\\com.bluetoothseclab.app-mergeDebugResources-47:\\layout\\activity_device_detail.xml",
+        "source": "C:\\Users\\shail\\.gradle\\daemon\\8.2\\com.bluetoothseclab.app-main-50:\\layout\\activity_device_detail.xml"
+    },
+    {
+        "merged": "com.bluetoothseclab.app-mergeDebugResources-47:/layout/activity_device_detail.xml",
+        "source": "com.bluetoothseclab.app-main-50:/layout/activity_device_detail.xml"
+    },
+    {
+        "merged": "com.bluetoothseclab.app-mergeDebugResources-47:/layout/activity_security_report.xml",
+        "source": "com.bluetoothseclab.app-main-50:/layout/activity_security_report.xml"
+    },
+    {
+        "merged": "C:\\Users\\shail\\.gradle\\daemon\\8.2\\com.bluetoothseclab.app-mergeDebugResources-47:\\layout\\item_device_card.xml",
+        "source": "C:\\Users\\shail\\.gradle\\daemon\\8.2\\com.bluetoothseclab.app-main-50:\\layout\\item_device_card.xml"
+    },
+    {
+        "merged": "com.bluetoothseclab.app-mergeDebugResources-47:/layout/activity_main.xml",
+        "source": "com.bluetoothseclab.app-main-50:/layout/activity_main.xml"
+    },
+    {
+        "merged": "C:\\Users\\shail\\.gradle\\daemon\\8.2\\com.bluetoothseclab.app-mergeDebugResources-47:\\layout\\activity_main.xml",
+        "source": "C:\\Users\\shail\\.gradle\\daemon\\8.2\\com.bluetoothseclab.app-main-50:\\layout\\activity_main.xml"
+    },
+    {
+        "merged": "C:\\Users\\shail\\.gradle\\daemon\\8.2\\com.bluetoothseclab.app-mergeDebugResources-47:\\layout\\activity_security_report.xml",
+        "source": "C:\\Users\\shail\\.gradle\\daemon\\8.2\\com.bluetoothseclab.app-main-50:\\layout\\activity_security_report.xml"
+    }
+]

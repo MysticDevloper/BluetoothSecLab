@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">BT Security Lab</string>
+    <string name="scan">Scan</string>
+    <string name="stop">Stop</string>
+    <string name="scanning">Scanning…</string>
+    <string name="no_devices">No devices found</string>
+    <string name="classic_devices">Classic Bluetooth</string>
+    <string name="ble_devices">BLE Devices</string>
+    <string name="security_assessment">Security Assessment</string>
+    <string name="device_details">Device Details</string>
+    <string name="disclaimer">For authorized testing only. Use only on devices you own.</string>
+</resources>
