@@ -190,8 +190,4 @@ This tool is for **authorized security testing only**. Use only on devices you o
 
 MIT License — see [LICENSE](LICENSE) for details.
 
----
 
-## Author
-
-**Shailesh Zirmire** — [GitHub](https://github.com/MysticDevloper)
