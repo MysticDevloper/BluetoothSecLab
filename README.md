@@ -1,14 +1,6 @@
 <div align="center">
 
-```
-██████╗ ██╗   ██╗██╗     ███████╗███████╗
-██╔══██╗██║   ██║██║     ██╔════╝██╔════╝
-██████╔╝██║   ██║██║     ███████╗█████╗  
-██╔══██╗██║   ██║██║     ╚════██║██╔══╝  
-██████╔╝╚██████╔╝███████╗███████║███████╗
-╚═════╝  ╚═════╝ ╚══════╝╚══════╝╚══════╝
-   SECURITY LAB  //  v1.0
-```
+# BT SECURITY LAB
 
 ![Android](https://img.shields.io/badge/Android-5.0%2B-3DDC84?style=for-the-badge&logo=android&logoColor=white)
 ![Kotlin](https://img.shields.io/badge/Kotlin-1.9-7F52FF?style=for-the-badge&logo=kotlin&logoColor=white)
@@ -18,7 +10,7 @@
 
 <br/>
 
-**Bluetooth Security Assessment Toolkit for Android**
+### Bluetooth Security Assessment Toolkit for Android
 
 `Scan` · `Enumerate` · `Exploit` · `Report`
 
