@@ -1,193 +1,433 @@
-# BT Security Lab
-
-A Bluetooth security assessment Android application for authorized penetration testing and research. Scans Classic (BR/EDR) and BLE devices, enumerates services, tests pairing vulnerabilities, probes RFCOMM ports, and generates security reports.
-
-> **For educational and authorized security testing only.**
-
----
-
-## APK Download
-
-The pre-built debug APK is included in this repository:
+<div align="center">
 
 ```
-BTSecurityLab-v1.0-debug.apk   (6.1 MB)
+██████╗ ██╗   ██╗██╗     ███████╗███████╗
+██╔══██╗██║   ██║██║     ██╔════╝██╔════╝
+██████╔╝██║   ██║██║     ███████╗█████╗  
+██╔══██╗██║   ██║██║     ╚════██║██╔══╝  
+██████╔╝╚██████╔╝███████╗███████║███████╗
+╚═════╝  ╚═════╝ ╚══════╝╚══════╝╚══════╝
+   SECURITY LAB  //  v1.0
 ```
 
-**Install on Android:**
-1. Enable **Install from unknown sources** in Settings > Security
-2. Transfer the APK to your phone
-3. Open the APK file and tap **Install**
+![Android](https://img.shields.io/badge/Android-5.0%2B-3DDC84?style=for-the-badge&logo=android&logoColor=white)
+![Kotlin](https://img.shields.io/badge/Kotlin-1.9-7F52FF?style=for-the-badge&logo=kotlin&logoColor=white)
+![API](https://img.shields.io/badge/API-34-4CAF50?style=for-the-badge)
+![License](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)
+![Status](https://img.shields.io/badge/Status-Active-brightgreen?style=for-the-badge)
 
-**Requirements:**
-- Android 5.0+ (API 21)
-- Bluetooth hardware
-- Location services enabled (required by Android for BT scanning)
+<br/>
 
----
+**Bluetooth Security Assessment Toolkit for Android**
 
-## Features
+`Scan` · `Enumerate` · `Exploit` · `Report`
 
-### Device Discovery
-- **Classic Bluetooth (BR/EDR)** scan — discovers paired and discoverable devices via inquiry
-- **BLE scan** — discovers Low Energy advertising devices with RSSI signal strength
-- Dual-tab interface showing device counts in real-time
+<br/>
 
-### Device Inspection
-- Device name, MAC address, bond state, device class, and service class
-- RSSI signal strength with visual quality indicator (bar + text)
-- Bluetooth profile enumeration via SDP (Serial Port, A2DP, HID, PAN, OBEX, etc.)
-- Manufacturer identification from BLE advertisement data
+[**⬇ DOWNLOAD APK (6.1 MB)**](BTSecurityLab-v1.0-debug.apk) · [**📖 DOCS**](#-quick-start) · [**🔧 BUILD**](#-build-from-source)
 
-### Security Assessment
-- **Vulnerability analysis** based on exposed profiles and device characteristics:
-  - OBEX file transfer exposure
-  - Legacy/insecure profiles (HSP, HFP, DUN, LAN, SYNC)
-  - Services exposed without bonding (CVE-2020-10135 / BIAS)
-  - Default PIN detection (HC-05/HC-06 modules)
-  - BrakTooth detection (ESP32/ESP devices, CVE-2021-28139)
-- **Severity ratings**: LOW / MEDIUM / HIGH / CRITICAL
-- CVE references where applicable
-
-### RFCOMM Port Scanner
-- SDP UUID enumeration — fetches service records from target device
-- UUID-based probe — connects to known Bluetooth profile UUIDs and sends protocol-specific probes (OBEX, AT commands, SPP)
-- Raw channel scan — scans RFCOMM channels 1-30 with concurrent connections (4 threads)
-- Protocol identification from raw byte responses (OBEX, AT/Modem, Text Protocol)
-- Risk scoring (0-10) based on open port severity
-
-### Pairing Testing
-- Tests 25 common default PINs (0000, 1234, 1111, etc.)
-- Bond removal capability
-- Results displayed with success/failure per PIN
-
-### Security Report
-- Formatted assessment report with timestamp
-- Device info, discovered services, and security findings
-- Recommendations section (firmware updates, secure pairing, LE Secure Connections)
-- Share report via Android share intent (email, messaging, etc.)
+</div>
 
 ---
 
-## Architecture
+## ⚡ Quick Start
 
-```
-com.bluetoothseclab/
-├── MainActivity.kt              # Main screen — scan controls, device lists
-├── DeviceDetailActivity.kt      # Device detail — info, pairing test, RFCOMM scan
-├── SecurityReportActivity.kt    # Formatted report with share capability
-├── BluetoothScanner.kt          # Classic BR/EDR discovery via BroadcastReceiver
-├── BLEScanner.kt                # BLE scan via BluetoothLeScanner API
-├── DevicePagerAdapter.kt        # ViewPager adapter for Classic/BLE tabs
-├── DeviceInfoGatherer.kt        # Device class, manufacturer ID resolution
-├── ServiceEnumerator.kt         # SDP UUID → profile name resolution
-├── PairingTester.kt             # PIN brute-force + bond management
-├── VulnerabilityChecker.kt      # Security issue assessment engine
-├── PermissionsHelper.kt         # Runtime permission + location/BT state checks
-├── attacks/
-│   └── RfcommScanner.kt         # RFCOMM port scanner with protocol probing
-└── models/
-    ├── BluetoothDeviceInfo.kt   # Device data model
-    ├── SecurityIssue.kt         # Security finding model
-    └── AttackResult.kt          # Scan result + finding + severity models
-```
+<table>
+<tr>
+<td width="50%" valign="top">
 
----
-
-## Permissions
-
-| Permission | Purpose |
-|---|---|
-| `BLUETOOTH` | Classic Bluetooth access |
-| `BLUETOOTH_ADMIN` | Bluetooth adapter control |
-| `BLUETOOTH_SCAN` | BLE scanning (Android 12+) |
-| `BLUETOOTH_CONNECT` | Device connection (Android 12+) |
-| `ACCESS_FINE_LOCATION` | Required by Android for BT discovery |
-| `ACCESS_COARSE_LOCATION` | Location permission fallback |
-| `INTERNET` | (Future: remote reporting) |
-
----
-
-## Building from Source
-
-**Prerequisites:**
-- Android Studio (Arctic Fox or later)
-- Android SDK 34
-- JDK 17
-
-**Steps:**
+### Install
 ```bash
+# Option 1: Direct download
+git clone https://github.com/MysticDevloper/BluetoothSecLab.git
+# APK is at the repo root
+
+# Option 2: Build from source
+./gradlew assembleDebug
+# Output: app/build/outputs/apk/debug/app-debug.apk
+```
+
+</td>
+<td width="50%" valign="top">
+
+### Requirements
+```
+┌─────────────────────────────────┐
+│  ✓ Android 5.0+  (API 21)      │
+│  ✓ Bluetooth hardware           │
+│  ✓ Location services ON         │
+│  ✓ Install from unknown sources │
+└─────────────────────────────────┘
+```
+
+</td>
+</tr>
+</table>
+
+---
+
+## 🎯 What It Does
+
+```
+                    ┌──────────────────────────────────────────┐
+                    │           BT SECURITY LAB                │
+                    │         Assessment Pipeline              │
+                    └──────────────┬───────────────────────────┘
+                                   │
+              ┌────────────────────┼────────────────────┐
+              │                    │                    │
+              ▼                    ▼                    ▼
+     ┌────────────────┐  ┌────────────────┐  ┌────────────────┐
+     │  🔍 DISCOVER   │  │  🔎 ANALYZE    │  │  📊 REPORT     │
+     │                │  │                │  │                │
+     │ • Classic scan │  │ • SDP enum     │  │ • Findings     │
+     │ • BLE scan     │  │ • Pairing test │  │ • Risk score   │
+     │ • RSSI signal  │  │ • RFCOMM probe │  │ • CVE refs     │
+     │ • Device class │  │ • Vuln check   │  │ • Share        │
+     └────────────────┘  └────────────────┘  └────────────────┘
+```
+
+---
+
+## 🧪 Capabilities
+
+<details open>
+<summary><b>📡 Device Discovery</b></summary>
+
+<br/>
+
+| Scan Type | Method | What It Finds |
+|:---------:|:------:|:-------------|
+| **Classic** | BR/EDR Inquiry | Paired & discoverable devices, RSSI, device class |
+| **BLE** | Low Energy Scan | Advertising devices, advertisement data, signal strength |
+
+```
+Signal Strength Indicator:
+  ▂▄▆█ █  -50 dBm  ████████████  Excellent
+  ▂▄▆█    -65 dBm  ████████░░░░  Good
+  ▂▄▆     -80 dBm  ██████░░░░░░  Fair
+  ▂▄      -90 dBm  ████░░░░░░░░  Weak
+  ▂      -100 dBm  ██░░░░░░░░░░  Very Weak
+```
+
+</details>
+
+<details open>
+<summary><b>🛡️ Vulnerability Analysis</b></summary>
+
+<br/>
+
+| Threat | Detection | CVE |
+|:------:|:---------:|:---:|
+| 🚨 OBEX File Transfer | Profile enumeration | CVE-2023-45866 |
+| 🚨 Default PIN (HC-05/06) | Device name matching | — |
+| ⚠️ Unbonded Services | Bond state + SDP check | CVE-2020-10135 |
+| ⚠️ Legacy Profiles (HSP/HFP) | Profile enumeration | — |
+| 🔵 BrakTooth (ESP32) | Device name matching | CVE-2021-28139 |
+
+</details>
+
+<details open>
+<summary><b>🔌 RFCOMM Port Scanner</b></summary>
+
+<br/>
+
+```
+Phase 1: SDP Discovery          Phase 2: UUID Probe
+┌─────────────────────┐         ┌─────────────────────┐
+│ fetchUuidsWithSdp() │────────▶│ createRfcommSocket  │
+│ 32 known UUIDs      │         │ + protocol probe     │
+└─────────────────────┘         └──────────┬──────────┘
+                                           │
+Phase 3: Channel Scan            Phase 4: Analysis
+┌─────────────────────┐         ┌─────────────────────┐
+│ Channels 1-30        │◀───────│ OBEX / AT / Text    │
+│ 4 threads concurrent │         │ Risk scoring 0-10   │
+└─────────────────────┘         └─────────────────────┘
+```
+
+**32 Known Bluetooth Profile UUIDs** including:
+```
+SPP · DUN · OBEX Push · OBEX FTP · HID · PAN · NAP
+A2DP · AVRCP · HFP · HSP · BIP · SAP · PBAP · MAP
+```
+
+</details>
+
+<details open>
+<summary><b>🔐 Pairing Test</b></summary>
+
+<br/>
+
+```
+Testing 25 Common Default PINs:
+─────────────────────────────────
+ ✓ 0000    ✗ 1234    ✗ 1111    ✗ 0001
+ ✗ 9999    ✗ 12345   ✗ 00000   ✗ 11111
+ ✗ 2222    ✗ 3333    ✗ 4444    ✗ 5555
+ ✗ 6666    ✗ 7777    ✗ 8888    ✗ 1212
+ ✗ 4321    ✗ 123456  ✗ 000000  ✗ 111111
+ ✗ 888888  ✗ 123123  ✗ 654321  ✗ 1122
+```
+
+</details>
+
+---
+
+## 🏗️ Architecture
+
+```mermaid
+graph TB
+    subgraph UI["🖥️ User Interface"]
+        A[MainActivity] -->|Classic Tab| B[DevicePagerAdapter]
+        A -->|BLE Tab| B
+        B --> C[DeviceDetailActivity]
+        C --> D[SecurityReportActivity]
+    end
+
+    subgraph SCAN["📡 Scanning Layer"]
+        E[BluetoothScanner] -->|BR/EDR Inquiry| F[BroadcastReceiver]
+        G[BLEScanner] -->|LE Scan| H[ScanCallback]
+    end
+
+    subgraph ANALYSIS["🔬 Analysis Layer"]
+        I[ServiceEnumerator] -->|SDP UUIDs| J[Profile Resolution]
+        K[DeviceInfoGatherer] -->|Class + MFR| L[Device Metadata]
+        M[VulnerabilityChecker] -->|Rules Engine| N[Security Issues]
+        O[PairingTester] -->|25 PINs| P[Bond Testing]
+    end
+
+    subgraph ATTACK["⚡ Attack Layer"]
+        Q[RfcommScanner] -->|Phase 1| R[SDP Fetch]
+        Q -->|Phase 2| S[UUID Probe]
+        Q -->|Phase 3| T[Channel Scan]
+        Q -->|Phase 4| U[Risk Scoring]
+    end
+
+    subgraph MODELS["📦 Data Models"]
+        V[BluetoothDeviceInfo]
+        W[SecurityIssue]
+        X[AttackResult]
+    end
+
+    C --> I
+    C --> K
+    C --> M
+    C --> O
+    C --> Q
+    C --> V
+    N --> W
+    U --> X
+```
+
+---
+
+## 📁 Project Structure
+
+```
+BluetoothSecLab/
+│
+├── 📄 README.md                    ← You are here
+├── 📄 BTSecurityLab-v1.0-debug.apk ← Ready to install
+├── 📄 build.gradle.kts             ← Root build config
+├── 📄 settings.gradle.kts          ← Project settings
+├── 📄 gradle.properties            ← Gradle properties
+│
+├── 📂 app/src/main/
+│   ├── 📄 AndroidManifest.xml      ← Permissions & activities
+│   │
+│   ├── 📂 java/com/bluetoothseclab/
+│   │   │
+│   │   ├── 🖥️ UI Layer
+│   │   │   ├── MainActivity.kt         # Scan controls + device tabs
+│   │   │   ├── DeviceDetailActivity.kt # Device detail + tests
+│   │   │   ├── SecurityReportActivity.kt # Report generation
+│   │   │   ├── DevicePagerAdapter.kt   # Classic/BLE tab adapter
+│   │   │   └── PermissionsHelper.kt    # Permission management
+│   │   │
+│   │   ├── 📡 Scanning Layer
+│   │   │   ├── BluetoothScanner.kt     # Classic BR/EDR discovery
+│   │   │   └── BLEScanner.kt           # Low Energy scanning
+│   │   │
+│   │   ├── 🔬 Analysis Layer
+│   │   │   ├── ServiceEnumerator.kt    # SDP profile enumeration
+│   │   │   ├── DeviceInfoGatherer.kt   # Device class + manufacturer
+│   │   │   ├── VulnerabilityChecker.kt # Security rule engine
+│   │   │   └── PairingTester.kt        # PIN testing + bond mgmt
+│   │   │
+│   │   ├── ⚡ Attack Layer
+│   │   │   └── attacks/
+│   │   │       └── RfcommScanner.kt    # RFCOMM port scanner
+│   │   │
+│   │   └── 📦 Models
+│   │       └── models/
+│   │           ├── BluetoothDeviceInfo.kt
+│   │           ├── SecurityIssue.kt
+│   │           └── AttackResult.kt
+│   │
+│   └── 📂 res/
+│       ├── layout/                 ← XML layouts
+│       ├── drawable/               ← Icons & backgrounds
+│       ├── values/                 ← Strings & themes
+│       └── menu/                   ← Toolbar menu
+```
+
+---
+
+## 🔄 Scan Flow
+
+```mermaid
+sequenceDiagram
+    participant U as 👤 User
+    participant M as 📱 MainActivity
+    participant P as 🔐 Permissions
+    participant S as 📡 Scanner
+    participant D as 📋 Device List
+    participant A as 🔎 Analysis
+
+    U->>M: Tap "Scan Classic" / "Scan BLE"
+    M->>P: Check permissions
+    
+    alt Permissions not granted
+        P-->>U: Request dialog
+        U->>P: Grant permissions
+    end
+    
+    M->>S: Start scan
+    S-->>M: onDeviceFound(device, rssi)
+    M->>D: Add to list + update tab count
+    
+    U->>M: Tap device
+    M->>A: Open DeviceDetailActivity
+    A->>A: Enumerate SDP profiles
+    A->>A: Run vulnerability checks
+    A-->>U: Display device info + findings
+    
+    U->>A: Tap "Test Pairing"
+    A->>A: Test 25 common PINs
+    A-->>U: Show PIN results
+    
+    U->>A: Tap "Scan RFCOMM"
+    A->>A: SDP → UUID probe → Channel scan
+    A-->>U: Show open ports + risk score
+    
+    U->>A: Tap "View Report"
+    A-->>U: Formatted security report
+    U->>A: Tap "Share"
+    A-->>U: Android share intent
+```
+
+---
+
+## 🔧 Build from Source
+
+<table>
+<tr>
+<td width="60%">
+
+### Prerequisites
+```
+┌──────────────────────────────────────────┐
+│  IDE:    Android Studio Arctic Fox+      │
+│  SDK:    Android SDK 34                  │
+│  JDK:    OpenJDK 17                      │
+│  Kotlin: 1.9.x                           │
+└──────────────────────────────────────────┘
+```
+
+### Build Commands
+```bash
+# Clone
 git clone https://github.com/MysticDevloper/BluetoothSecLab.git
 cd BluetoothSecLab
+
+# Debug build
 ./gradlew assembleDebug
-```
 
-APK output: `app/build/outputs/apk/debug/app-debug.apk`
-
-**Release build:**
-```bash
+# Release build (requires signing config)
 ./gradlew assembleRelease
 ```
-(Requires signing configuration in `app/build.gradle.kts`)
+
+### Output
+```
+app/build/outputs/apk/debug/app-debug.apk     (6.1 MB)
+```
+
+</td>
+<td width="40%">
+
+### Tech Stack
+```
+┌─────────────────────────────┐
+│  🟢 Kotlin 1.9              │
+│  🟡 Android SDK 34          │
+│  🔵 Material Design 1.11    │
+│  🟣 AndroidX Core 1.12      │
+│  ⚪ ConstraintLayout 2.1    │
+│  🔴 Navigation 2.7          │
+│  🟠 CardView 1.0            │
+│  🔵 RecyclerView 1.3        │
+└─────────────────────────────┘
+```
+
+</td>
+</tr>
+</table>
 
 ---
 
-## Dependencies
+## ⚠️ Known Limitations
 
-| Library | Version | Purpose |
-|---|---|---|
-| AndroidX Core KTX | 1.12.0 | Kotlin extensions |
-| AppCompat | 1.6.1 | Backward-compatible UI |
-| Material Design | 1.11.0 | UI components, tabs, snackbars |
-| ConstraintLayout | 2.1.4 | Layout system |
-| Navigation | 2.7.6 | Fragment navigation |
-| CardView | 1.0.0 | Card-based UI |
-| RecyclerView | 1.3.2 | Device list rendering |
-
----
-
-## How It Works
-
-### Scanning Flow
-1. App requests Bluetooth + Location permissions on launch
-2. User taps **Scan Classic** or **Scan BLE**
-3. Discovered devices appear in respective tabs with live count
-4. Tap any device to open detail screen
-
-### Assessment Flow
-1. Device detail screen shows info, profiles, and vulnerability analysis
-2. **Test Pairing** — tries 25 common PINs against the device
-3. **Scan RFCOMM Ports** — enumerates open RFCOMM channels with protocol probes
-4. **View Report** — generates formatted security report
-5. **Share Report** — send report via any app
-
-### RFCOMM Scanner Strategy
-1. SDP UUID fetch → discover advertised services
-2. UUID probe → connect to each known profile, send protocol-specific payload
-3. Channel scan → brute-force channels 1-30 via reflection API
-4. Response analysis → identify protocol from raw bytes (OBEX, AT, Text)
-5. Risk scoring → aggregate severity of all open ports
+```
+┌─────────────────────────────────────────────────────────────┐
+│  ⚠  RFCOMM reflection may not work on all Android versions │
+│  ⚠  PIN testing blocked on Android 12+ for unbonded devs   │
+│  ⚠  BLE manufacturer data requires active scan              │
+│  ⚠  No LE Secure Connections test (needs SMP access)        │
+│  ⚠  Risk scoring is heuristic, not formal vuln scanner      │
+└─────────────────────────────────────────────────────────────┘
+```
 
 ---
 
-## Known Limitations
+## 📋 Permissions Matrix
 
-- RFCOMM channel scan uses reflection (`createRfcommSocket`) — may not work on all Android versions
-- Pairing PIN testing uses `setPin()` via reflection — blocked on Android 12+ for unbonded devices
-- BLE advertisement data (manufacturer-specific) requires active BLE scan to capture
-- No LE Secure Connections pairing test (requires BLE SMP layer access)
-- Risk scoring is heuristic-based, not a formal vulnerability scanner
-
----
-
-## Legal Disclaimer
-
-This tool is for **authorized security testing only**. Use only on devices you own or have explicit written permission to test. Unauthorized use may violate laws including CFAA (US), GDPR (EU), and local regulations. The developer assumes no liability for misuse.
+| Permission | Why | Android 6+ | Android 12+ |
+|:----------:|:---:|:----------:|:-----------:|
+| `BLUETOOTH` | Classic BT | Auto | Auto |
+| `BLUETOOTH_ADMIN` | Adapter control | Auto | Auto |
+| `BLUETOOTH_SCAN` | BLE scanning | — | Runtime |
+| `BLUETOOTH_CONNECT` | Device connection | — | Runtime |
+| `ACCESS_FINE_LOCATION` | BT discovery | Runtime | Runtime |
+| `ACCESS_COARSE_LOCATION` | Fallback | Runtime | Runtime |
 
 ---
 
-## License
+## 📊 Severity Legend
 
-MIT License — see [LICENSE](LICENSE) for details.
+```
+┌────────┬────────────────────────────────────────────────┐
+│  🚨    │  CRITICAL — Immediate risk, disable immediately │
+│  ⚠️    │  HIGH — Significant exposure, restrict access   │
+│  🔵    │  MEDIUM — Review required, ensure bonding       │
+│  🟢    │  LOW — Informational, minimal risk              │
+│  ℹ️    │  INFO — Observation, no direct risk             │
+└────────┴────────────────────────────────────────────────┘
+```
 
+---
 
+<div align="center">
+
+### ⚖️ Legal Disclaimer
+
+> This tool is for **authorized security testing only**.
+> Use only on devices you own or have explicit written permission to test.
+> Unauthorized use may violate laws including CFAA (US), GDPR (EU), and local regulations.
+> The developer assumes no liability for misuse.
+
+---
+
+**BT Security Lab** · Built with 🔒 for security researchers
+
+</div>
