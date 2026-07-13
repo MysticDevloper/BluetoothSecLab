@@ -24,7 +24,7 @@
 
 <br/>
 
-[**⬇ DOWNLOAD APK (6.1 MB)**](BTSecurityLab-v1.0-debug.apk) · [**📖 DOCS**](#-quick-start) · [**🔧 BUILD**](#-build-from-source)
+[**⬇ DOWNLOAD APK (7.4 MB)**](BTSecurityLab-v1.0-debug.apk) · [**📖 DOCS**](#-quick-start) · [**🔧 BUILD**](#-build-from-source)
 
 </div>
 
@@ -458,7 +458,7 @@ cd BluetoothSecLab
 
 ### Output
 ```
-app/build/outputs/apk/debug/app-debug.apk     (6.1 MB)
+app/build/outputs/apk/debug/app-debug.apk     (7.4 MB)
 ```
 
 </td>
