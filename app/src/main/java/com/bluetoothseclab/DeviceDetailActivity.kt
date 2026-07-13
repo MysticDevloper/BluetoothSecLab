@@ -9,7 +9,9 @@ import android.os.Looper
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import com.bluetoothseclab.attacks.RfcommScanner
 import com.bluetoothseclab.databinding.ActivityDeviceDetailBinding
+import com.bluetoothseclab.models.AttackResult
 import com.bluetoothseclab.models.SecurityIssue
 
 class DeviceDetailActivity : AppCompatActivity() {
@@ -41,6 +43,7 @@ class DeviceDetailActivity : AppCompatActivity() {
             populateDeviceInfo(device!!, name, type, currentRssi)
             populateBLEAdData(device!!)
             setupPairingTest(device!!)
+            setupRfcommScan(device!!)
         }
     }
 
@@ -150,6 +153,82 @@ class DeviceDetailActivity : AppCompatActivity() {
                 Toast.makeText(this, "Failed to remove bond", Toast.LENGTH_SHORT).show()
                 binding.tvPairingResults.text = "Failed to remove bond (may require root or Android 12+ restrictions)"
             }
+        }
+    }
+
+    private var rfcommScanRunning = false
+
+    private fun setupRfcommScan(dev: BluetoothDevice) {
+        binding.btnScanRfcomm.setOnClickListener {
+            if (rfcommScanRunning) {
+                Toast.makeText(this, "RFCOMM scan already in progress", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            rfcommScanRunning = true
+            binding.btnScanRfcomm.isEnabled = false
+            binding.btnScanRfcomm.text = "Scanning..."
+            binding.tvRfcommStatus.text = "Initializing..."
+            binding.tvRfcommResults.text = ""
+
+            RfcommScanner.scan(
+                device = dev,
+                context = this,
+                onProgress = { msg ->
+                    binding.tvRfcommStatus.text = msg
+                },
+                onPortFound = { port ->
+                    val existing = binding.tvRfcommResults.text
+                    val emoji = when (port.riskLevel) {
+                        AttackResult.Severity.CRITICAL -> "\uD83D\uDEA8"
+                        AttackResult.Severity.HIGH -> "\u26A0\uFE0F"
+                        AttackResult.Severity.MEDIUM -> "\uD83D\uDD35"
+                        AttackResult.Severity.LOW -> "\uD83D\uDFE2"
+                        AttackResult.Severity.INFO -> "\u2139\uFE0F"
+                    }
+                    val hexLine = if (port.rawReceivedHex != null) "\n   HEX: ${port.rawReceivedHex}" else ""
+                    val asciiLine = if (port.rawReceivedAscii != null && port.rawReceivedAscii.isNotBlank())
+                        "\n   ASC: \"${port.rawReceivedAscii}\"" else ""
+                    binding.tvRfcommResults.text = "$existing\n$emoji ${port.serviceName} [${port.riskLevel.name}]$hexLine$asciiLine"
+                },
+                onComplete = { result ->
+                    rfcommScanRunning = false
+                    binding.btnScanRfcomm.isEnabled = true
+                    binding.btnScanRfcomm.text = "Scan RFCOMM Ports"
+                    binding.tvRfcommStatus.text = "Complete (${result.durationMs / 1000}s) — Risk: ${result.riskScore}/10"
+
+                    val resultText = buildString {
+                        appendLine("=== RFCOMM Scan Results ===")
+                        appendLine("Status: ${result.status.name}")
+                        appendLine("Risk Score: ${result.riskScore}/10")
+                        appendLine("Duration: ${result.durationMs / 1000}s")
+                        appendLine("Strategy: ${result.summary.substringBefore(" |")}")
+                        appendLine()
+                        if (result.findings.isEmpty()) {
+                            appendLine("No open RFCOMM ports detected.")
+                            appendLine("Device is not exposing any services via RFCOMM.")
+                        } else {
+                            appendLine("Open Ports (${result.findings.size}):")
+                            for (finding in result.findings) {
+                                val icon = when (finding.severity) {
+                                    AttackResult.Severity.CRITICAL -> "\uD83D\uDEA8"
+                                    AttackResult.Severity.HIGH -> "\u26A0\uFE0F"
+                                    AttackResult.Severity.MEDIUM -> "\uD83D\uDD35"
+                                    AttackResult.Severity.LOW -> "\uD83D\uDFE2"
+                                    AttackResult.Severity.INFO -> "\u2139\uFE0F"
+                                }
+                                appendLine("$icon ${finding.title}")
+                                appendLine("   ${finding.description}")
+                                if (finding.remediation != null) {
+                                    appendLine("   Fix: ${finding.remediation}")
+                                }
+                                appendLine()
+                            }
+                        }
+                        appendLine("=== End Report ===")
+                    }
+                    binding.tvRfcommResults.text = resultText
+                }
+            )
         }
     }
 

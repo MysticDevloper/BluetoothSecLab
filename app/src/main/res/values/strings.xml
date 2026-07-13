@@ -10,4 +10,8 @@
     <string name="security_assessment">Security Assessment</string>
     <string name="device_details">Device Details</string>
     <string name="disclaimer">For authorized testing only. Use only on devices you own.</string>
+    <string name="rfcomm_scan">Scan RFCOMM Ports</string>
+    <string name="rfcomm_status_initial">Tap \'Scan Ports\' to discover open RFCOMM channels</string>
+    <string name="rfcomm_scanning">Scanning…</string>
+    <string name="rfcomm_in_progress">RFCOMM scan already in progress</string>
 </resources>
