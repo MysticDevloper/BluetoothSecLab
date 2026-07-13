@@ -9,6 +9,9 @@ import android.os.Looper
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import com.bluetoothseclab.attacks.BleConnectionFlooder
+import com.bluetoothseclab.attacks.BleGattFuzzer
+import com.bluetoothseclab.attacks.RfcommBufferFlood
 import com.bluetoothseclab.attacks.RfcommScanner
 import com.bluetoothseclab.databinding.ActivityDeviceDetailBinding
 import com.bluetoothseclab.models.AttackResult
@@ -44,6 +47,9 @@ class DeviceDetailActivity : AppCompatActivity() {
             populateBLEAdData(device!!)
             setupPairingTest(device!!)
             setupRfcommScan(device!!)
+            setupBleFlooder(device!!)
+            setupRfcommFlood(device!!)
+            setupGattFuzzer(device!!)
         }
     }
 
@@ -229,6 +235,220 @@ class DeviceDetailActivity : AppCompatActivity() {
                     binding.tvRfcommResults.text = resultText
                 }
             )
+        }
+    }
+
+    private fun showLabWarning(onConfirm: () -> Unit) {
+        AlertDialog.Builder(this)
+            .setTitle("Lab Environment Only")
+            .setMessage(
+                "This attack module is for controlled lab testing on devices you own or have " +
+                "explicit authorization to test.\n\n" +
+                "• All attacks auto-stop after 25-30 seconds\n" +
+                "• Do NOT use on production or third-party devices\n" +
+                "• Results are for educational/research purposes\n\n" +
+                "Proceed?"
+            )
+            .setPositiveButton("Start Test") { _, _ -> onConfirm() }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private var bleFloodRunning = false
+
+    private fun setupBleFlooder(dev: BluetoothDevice) {
+        binding.btnBleFloodStop.isEnabled = false
+
+        binding.btnBleFloodStart.setOnClickListener {
+            if (bleFloodRunning) return@setOnClickListener
+            showLabWarning {
+                bleFloodRunning = true
+                binding.btnBleFloodStart.isEnabled = false
+                binding.btnBleFloodStop.isEnabled = true
+                binding.tvBleFloodStatus.text = "Initializing..."
+                binding.tvBleFloodResults.text = ""
+
+                BleConnectionFlooder.flood(
+                    device = dev,
+                    context = this,
+                    onProgress = { msg -> binding.tvBleFloodStatus.text = msg },
+                    onResult = { result ->
+                        val summary = buildString {
+                            appendLine("=== Connection Slot Test ===")
+                            appendLine("Attempted: ${result.attemptedConnections}")
+                            appendLine("Connected: ${result.successfulConnections}")
+                            appendLine("Failed: ${result.failedConnections}")
+                            appendLine("Avg connect time: ${result.avgConnectTimeMs}ms")
+                            appendLine("Multi-connection: ${result.targetSupportsMultiple}")
+                            appendLine("Slots exhausted: ${result.slotsExhausted}")
+                        }
+                        binding.tvBleFloodResults.text = summary
+                    },
+                    onComplete = { result ->
+                        bleFloodRunning = false
+                        binding.btnBleFloodStart.isEnabled = true
+                        binding.btnBleFloodStop.isEnabled = false
+                        binding.tvBleFloodStatus.text = "Complete (${result.durationMs / 1000}s) — Risk: ${result.riskScore}/10"
+
+                        val report = buildString {
+                            appendLine("=== BLE Connection Flooder Report ===")
+                            appendLine("Status: ${result.status.name}")
+                            appendLine("Risk Score: ${result.riskScore}/10")
+                            appendLine("Duration: ${result.durationMs / 1000}s")
+                            appendLine()
+                            for (finding in result.findings) {
+                                appendLine("[${finding.severity}] ${finding.title}")
+                                appendLine("  ${finding.description}")
+                                if (finding.cveReference != null) appendLine("  Ref: ${finding.cveReference}")
+                                if (finding.remediation != null) appendLine("  Fix: ${finding.remediation}")
+                                appendLine()
+                            }
+                            appendLine(result.summary)
+                        }
+                        binding.tvBleFloodResults.text = report
+                    }
+                )
+            }
+        }
+
+        binding.btnBleFloodStop.setOnClickListener {
+            BleConnectionFlooder.stop()
+            bleFloodRunning = false
+            binding.btnBleFloodStart.isEnabled = true
+            binding.btnBleFloodStop.isEnabled = false
+            binding.tvBleFloodStatus.text = "Stopped by user"
+        }
+    }
+
+    private var rfcommFloodRunning = false
+
+    private fun setupRfcommFlood(dev: BluetoothDevice) {
+        binding.btnRfcommFloodStop.isEnabled = false
+
+        binding.btnRfcommFloodStart.setOnClickListener {
+            if (rfcommFloodRunning) return@setOnClickListener
+            showLabWarning {
+                rfcommFloodRunning = true
+                binding.btnRfcommFloodStart.isEnabled = false
+                binding.btnRfcommFloodStop.isEnabled = true
+                binding.tvRfcommFloodStatus.text = "Initializing..."
+                binding.tvRfcommFloodResults.text = ""
+
+                RfcommBufferFlood.flood(
+                    device = dev,
+                    context = this,
+                    onProgress = { msg -> binding.tvRfcommFloodStatus.text = msg },
+                    onResult = { result ->
+                        val summary = buildString {
+                            appendLine("=== RFCOMM Buffer Test ===")
+                            appendLine("Channels opened: ${result.channelsOpened}")
+                            appendLine("Total sent: ${result.totalBytesSent / 1024}KB")
+                            appendLine("Write errors: ${result.writeErrors}")
+                            appendLine("Avg write time: ${result.avgWriteTimeMs}ms")
+                            appendLine("Buffers exhausted: ${result.buffersExhausted}")
+                        }
+                        binding.tvRfcommFloodResults.text = summary
+                    },
+                    onComplete = { result ->
+                        rfcommFloodRunning = false
+                        binding.btnRfcommFloodStart.isEnabled = true
+                        binding.btnRfcommFloodStop.isEnabled = false
+                        binding.tvRfcommFloodStatus.text = "Complete (${result.durationMs / 1000}s) — Risk: ${result.riskScore}/10"
+
+                        val report = buildString {
+                            appendLine("=== RFCOMM Buffer Flood Report ===")
+                            appendLine("Status: ${result.status.name}")
+                            appendLine("Risk Score: ${result.riskScore}/10")
+                            appendLine("Duration: ${result.durationMs / 1000}s")
+                            appendLine()
+                            for (finding in result.findings) {
+                                appendLine("[${finding.severity}] ${finding.title}")
+                                appendLine("  ${finding.description}")
+                                if (finding.cveReference != null) appendLine("  Ref: ${finding.cveReference}")
+                                if (finding.remediation != null) appendLine("  Fix: ${finding.remediation}")
+                                appendLine()
+                            }
+                            appendLine(result.summary)
+                        }
+                        binding.tvRfcommFloodResults.text = report
+                    }
+                )
+            }
+        }
+
+        binding.btnRfcommFloodStop.setOnClickListener {
+            RfcommBufferFlood.stop()
+            rfcommFloodRunning = false
+            binding.btnRfcommFloodStart.isEnabled = true
+            binding.btnRfcommFloodStop.isEnabled = false
+            binding.tvRfcommFloodStatus.text = "Stopped by user"
+        }
+    }
+
+    private var gattFuzzRunning = false
+
+    private fun setupGattFuzzer(dev: BluetoothDevice) {
+        binding.btnGattFuzzStop.isEnabled = false
+
+        binding.btnGattFuzzStart.setOnClickListener {
+            if (gattFuzzRunning) return@setOnClickListener
+            showLabWarning {
+                gattFuzzRunning = true
+                binding.btnGattFuzzStart.isEnabled = false
+                binding.btnGattFuzzStop.isEnabled = true
+                binding.tvGattFuzzStatus.text = "Initializing..."
+                binding.tvGattFuzzResults.text = ""
+
+                BleGattFuzzer.fuzz(
+                    device = dev,
+                    context = this,
+                    onProgress = { msg -> binding.tvGattFuzzStatus.text = msg },
+                    onResult = { result ->
+                        val summary = buildString {
+                            appendLine("=== GATT Fuzz Results ===")
+                            appendLine("Services: ${result.servicesDiscovered}")
+                            appendLine("Characteristics: ${result.characteristicsFound}")
+                            appendLine("Write attempts: ${result.writeAttempts}")
+                            appendLine("Successes: ${result.writeSuccesses}")
+                            appendLine("Errors: ${result.writeErrors}")
+                            appendLine("Disconnects: ${result.disconnects}")
+                            appendLine("Crash detected: ${result.crashDetected}")
+                        }
+                        binding.tvGattFuzzResults.text = summary
+                    },
+                    onComplete = { result ->
+                        gattFuzzRunning = false
+                        binding.btnGattFuzzStart.isEnabled = true
+                        binding.btnGattFuzzStop.isEnabled = false
+                        binding.tvGattFuzzStatus.text = "Complete (${result.durationMs / 1000}s) — Risk: ${result.riskScore}/10"
+
+                        val report = buildString {
+                            appendLine("=== BLE GATT Fuzzer Report ===")
+                            appendLine("Status: ${result.status.name}")
+                            appendLine("Risk Score: ${result.riskScore}/10")
+                            appendLine("Duration: ${result.durationMs / 1000}s")
+                            appendLine()
+                            for (finding in result.findings) {
+                                appendLine("[${finding.severity}] ${finding.title}")
+                                appendLine("  ${finding.description}")
+                                if (finding.cveReference != null) appendLine("  Ref: ${finding.cveReference}")
+                                if (finding.remediation != null) appendLine("  Fix: ${finding.remediation}")
+                                appendLine()
+                            }
+                            appendLine(result.summary)
+                        }
+                        binding.tvGattFuzzResults.text = report
+                    }
+                )
+            }
+        }
+
+        binding.btnGattFuzzStop.setOnClickListener {
+            BleGattFuzzer.stop()
+            gattFuzzRunning = false
+            binding.btnGattFuzzStart.isEnabled = true
+            binding.btnGattFuzzStop.isEnabled = false
+            binding.tvGattFuzzStatus.text = "Stopped by user"
         }
     }
 

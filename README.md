@@ -78,12 +78,12 @@ git clone https://github.com/MysticDevloper/BluetoothSecLab.git
               │                    │                    │
               ▼                    ▼                    ▼
      ┌────────────────┐  ┌────────────────┐  ┌────────────────┐
-     │  🔍 DISCOVER   │  │  🔎 ANALYZE    │  │  📊 REPORT     │
+     │  🔍 DISCOVER   │  │  🔎 ANALYZE    │  │  ⚡ ATTACK     │
      │                │  │                │  │                │
-     │ • Classic scan │  │ • SDP enum     │  │ • Findings     │
-     │ • BLE scan     │  │ • Pairing test │  │ • Risk score   │
-     │ • RSSI signal  │  │ • RFCOMM probe │  │ • CVE refs     │
-     │ • Device class │  │ • Vuln check   │  │ • Share        │
+     │ • Classic scan │  │ • SDP enum     │  │ • BLE flood    │
+     │ • BLE scan     │  │ • Pairing test │  │ • RFCOMM flood │
+     │ • RSSI signal  │  │ • RFCOMM probe │  │ • GATT fuzz    │
+     │ • Device class │  │ • Vuln check   │  │ • Bond remove  │
      └────────────────┘  └────────────────┘  └────────────────┘
 ```
 
@@ -172,9 +172,99 @@ Testing 25 Common Default PINs:
 
 </details>
 
----
+<details open>
+<summary><b>💥 BLE Connection Flooder</b> <code>CVE-2026-52866</code></summary>
 
-## 🏗️ Architecture
+<br/>
+
+> **Real attack** — exhausts target's BLE connection slots via rapid GATT connections.
+> No root required. Auto-stops after 30 seconds.
+
+```
+Attack Flow:
+┌──────────────┐    ┌──────────────────┐    ┌──────────────────┐
+│ connectGatt  │───▶│ discoverServices │───▶│ Hold connection  │
+│ (rapid fire) │    │ (keep active)    │    │ (8s per slot)    │
+└──────────────┘    └──────────────────┘    └──────────────────┘
+
+Target: Most BLE devices support 3-7 connections
+Result: Legitimate devices blocked from connecting
+CVE Pattern: CVE-2026-52866 (connection slot monopolization)
+```
+
+| Metric | Value |
+|:------:|:-----:|
+| Connections Attempted | 12 |
+| Connection Interval | 500ms |
+| Hold Duration | 8s per connection |
+| Auto-stop | 30 seconds |
+| Root Required | No |
+
+</details>
+
+<details open>
+<summary><b>💣 RFCOMM Buffer Flood</b> <code>CVE-2026-31280</code></summary>
+
+<br/>
+
+> **Real attack** — opens multiple RFCOMM channels and floods with 4KB payloads
+> to exhaust the target's RFCOMM buffer space. No root required.
+
+```
+Attack Flow:
+┌──────────────┐    ┌──────────────────┐    ┌──────────────────┐
+│ Open RFCOMM  │───▶│ Flood 4KB chunks │───▶│ Monitor errors   │
+│ (up to 10)   │    │ (20 iterations)  │    │ (buffer exhaust) │
+└──────────────┘    └──────────────────┘    └──────────────────┘
+
+Target: Legacy Bluetooth stacks with limited RFCOMM buffers
+Result: Device freeze or reboot (CVE-2026-31280 confirmed)
+CVE Pattern: CVE-2026-31280 (Parani M10 RFCOMM DoS)
+```
+
+| Metric | Value |
+|:------:|:-----:|
+| Channels Opened | Up to 10 |
+| Payload Size | 4096 bytes |
+| Flood Iterations | 20 per channel |
+| Total Data | ~800KB |
+| Auto-stop | 25 seconds |
+| Root Required | No |
+
+</details>
+
+<details open>
+<summary><b>🔬 BLE GATT Fuzzer</b> <code>BSFuzzer Method</code></summary>
+
+<br/>
+
+> **Real attack** — enumerates all GATT services/characteristics, then fuzzes
+> writable characteristics with malformed payloads (empty, oversized, null-byte,
+> AT injection, HTTP injection). Based on BSFuzzer methodology (USENIX 2025).
+
+```
+Attack Flow:
+┌──────────────┐    ┌──────────────────┐    ┌──────────────────┐
+│ GATT Connect │───▶│ Enumerate all    │───▶│ Fuzz each char   │
+│              │    │ services + chars │    │ (15 payloads)    │
+└──────────────┘    └──────────────────┘    └──────────────────┘
+
+Payload Types:
+  Empty · Single byte · 20B MTU · 100B · 255B (max ATT)
+  512B oversized · 1024B · All zeros · All 0xFF
+  Null terminator · AT injection · HTTP injection
+```
+
+| Metric | Value |
+|:------:|:-----:|
+| Payload Types | 15 per characteristic |
+| Max Write Attempts | 50 |
+| Write Delay | 200ms |
+| Crash Detection | Disconnect monitoring |
+| Auto-stop | 30 seconds |
+| Root Required | No |
+
+</details>
 
 ```mermaid
 graph TB
@@ -202,6 +292,9 @@ graph TB
         Q -->|Phase 2| S[UUID Probe]
         Q -->|Phase 3| T[Channel Scan]
         Q -->|Phase 4| U[Risk Scoring]
+        AA[BleConnectionFlooder] -->|GATT Flood| AB[Slot Exhaustion]
+        AC[RfcommBufferFlood] -->|Buffer Flood| AD[Buffer Exhaustion]
+        AE[BleGattFuzzer] -->|Malformed Writes| AF[Crash Detection]
     end
 
     subgraph MODELS["📦 Data Models"]
@@ -257,7 +350,10 @@ BluetoothSecLab/
 │   │   │
 │   │   ├── ⚡ Attack Layer
 │   │   │   └── attacks/
-│   │   │       └── RfcommScanner.kt    # RFCOMM port scanner
+│   │   │       ├── RfcommScanner.kt         # RFCOMM port scanner
+│   │   │       ├── BleConnectionFlooder.kt   # BLE connection slot DoS
+│   │   │       ├── RfcommBufferFlood.kt      # RFCOMM buffer flood DoS
+│   │   │       └── BleGattFuzzer.kt           # GATT service fuzzer
 │   │   │
 │   │   └── 📦 Models
 │   │       └── models/
@@ -310,6 +406,18 @@ sequenceDiagram
     U->>A: Tap "Scan RFCOMM"
     A->>A: SDP → UUID probe → Channel scan
     A-->>U: Show open ports + risk score
+
+    U->>A: Tap "Start Flood" (BLE)
+    A->>A: Rapid GATT connect/disconnect
+    A-->>U: Show connection slot exhaustion
+
+    U->>A: Tap "Start Flood" (RFCOMM)
+    A->>A: Open channels + flood 4KB payloads
+    A-->>U: Show buffer exhaustion results
+
+    U->>A: Tap "Start Fuzz" (GATT)
+    A->>A: Enumerate + fuzz all writable chars
+    A-->>U: Show crash detection results
     
     U->>A: Tap "View Report"
     A-->>U: Formatted security report
@@ -382,9 +490,10 @@ app/build/outputs/apk/debug/app-debug.apk     (6.1 MB)
 ┌─────────────────────────────────────────────────────────────┐
 │  ⚠  RFCOMM reflection may not work on all Android versions │
 │  ⚠  PIN testing blocked on Android 12+ for unbonded devs   │
-│  ⚠  BLE manufacturer data requires active scan              │
-│  ⚠  No LE Secure Connections test (needs SMP access)        │
+│  ⚠  BLE GATT write deprecated on API 33+ (still functional)│
+│  ⚠  True BLE deauth frames need external HW (ESP32/Ubert)  │
 │  ⚠  Risk scoring is heuristic, not formal vuln scanner      │
+│  ⚠  All attacks auto-stop after 25-30s for lab safety       │
 └─────────────────────────────────────────────────────────────┘
 ```
 
