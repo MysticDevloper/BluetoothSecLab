@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.bluetoothseclab.attacks.BleConnectionFlooder
@@ -16,6 +17,7 @@ import com.bluetoothseclab.attacks.RfcommScanner
 import com.bluetoothseclab.databinding.ActivityDeviceDetailBinding
 import com.bluetoothseclab.models.AttackResult
 import com.bluetoothseclab.models.SecurityIssue
+import java.util.concurrent.atomic.AtomicBoolean
 
 class DeviceDetailActivity : AppCompatActivity() {
 
@@ -34,23 +36,43 @@ class DeviceDetailActivity : AppCompatActivity() {
 
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                finish()
+            }
+        })
+
         val name = intent.getStringExtra("device_name") ?: "Unknown"
         val address = intent.getStringExtra("device_address") ?: ""
         val type = intent.getIntExtra("device_type", BluetoothDevice.DEVICE_TYPE_UNKNOWN)
         isBle = intent.getBooleanExtra("device_is_ble", false)
         currentRssi = intent.getIntExtra("device_rssi", 0)
 
-        device = bluetoothAdapter?.getRemoteDevice(address)
-
-        if (device != null) {
-            populateDeviceInfo(device!!, name, type, currentRssi)
-            populateBLEAdData(device!!)
-            setupPairingTest(device!!)
-            setupRfcommScan(device!!)
-            setupBleFlooder(device!!)
-            setupRfcommFlood(device!!)
-            setupGattFuzzer(device!!)
+        if (address.isBlank() || !address.matches(Regex("^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$"))) {
+            Toast.makeText(this, "Invalid device address", Toast.LENGTH_SHORT).show()
+            finish()
+            return
         }
+
+        device = try {
+            bluetoothAdapter?.getRemoteDevice(address)
+        } catch (_: IllegalArgumentException) {
+            null
+        }
+
+        if (device == null) {
+            Toast.makeText(this, "Device not found", Toast.LENGTH_SHORT).show()
+            finish()
+            return
+        }
+
+        populateDeviceInfo(device!!, name, type, currentRssi)
+        populateBLEAdData(device!!)
+        setupPairingTest(device!!)
+        setupRfcommScan(device!!)
+        setupBleFlooder(device!!)
+        setupRfcommFlood(device!!)
+        setupGattFuzzer(device!!)
     }
 
     private fun populateDeviceInfo(dev: BluetoothDevice, name: String, type: Int, rssi: Int) {
@@ -162,15 +184,18 @@ class DeviceDetailActivity : AppCompatActivity() {
         }
     }
 
-    private var rfcommScanRunning = false
+    private var rfcommScanRunning = AtomicBoolean(false)
+    private var bleFloodRunning = AtomicBoolean(false)
+    private var rfcommFloodRunning = AtomicBoolean(false)
+    private var gattFuzzRunning = AtomicBoolean(false)
 
     private fun setupRfcommScan(dev: BluetoothDevice) {
         binding.btnScanRfcomm.setOnClickListener {
-            if (rfcommScanRunning) {
+            if (rfcommScanRunning.get()) {
                 Toast.makeText(this, "RFCOMM scan already in progress", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
-            rfcommScanRunning = true
+            rfcommScanRunning.set(true)
             binding.btnScanRfcomm.isEnabled = false
             binding.btnScanRfcomm.text = "Scanning..."
             binding.tvRfcommStatus.text = "Initializing..."
@@ -197,7 +222,7 @@ class DeviceDetailActivity : AppCompatActivity() {
                     binding.tvRfcommResults.text = "$existing\n$emoji ${port.serviceName} [${port.riskLevel.name}]$hexLine$asciiLine"
                 },
                 onComplete = { result ->
-                    rfcommScanRunning = false
+                    rfcommScanRunning.set(false)
                     binding.btnScanRfcomm.isEnabled = true
                     binding.btnScanRfcomm.text = "Scan RFCOMM Ports"
                     binding.tvRfcommStatus.text = "Complete (${result.durationMs / 1000}s) — Risk: ${result.riskScore}/10"
@@ -254,15 +279,13 @@ class DeviceDetailActivity : AppCompatActivity() {
             .show()
     }
 
-    private var bleFloodRunning = false
-
     private fun setupBleFlooder(dev: BluetoothDevice) {
         binding.btnBleFloodStop.isEnabled = false
 
         binding.btnBleFloodStart.setOnClickListener {
-            if (bleFloodRunning) return@setOnClickListener
+            if (bleFloodRunning.get()) return@setOnClickListener
             showLabWarning {
-                bleFloodRunning = true
+                bleFloodRunning.set(true)
                 binding.btnBleFloodStart.isEnabled = false
                 binding.btnBleFloodStop.isEnabled = true
                 binding.tvBleFloodStatus.text = "Initializing..."
@@ -285,7 +308,7 @@ class DeviceDetailActivity : AppCompatActivity() {
                         binding.tvBleFloodResults.text = summary
                     },
                     onComplete = { result ->
-                        bleFloodRunning = false
+                        bleFloodRunning.set(false)
                         binding.btnBleFloodStart.isEnabled = true
                         binding.btnBleFloodStop.isEnabled = false
                         binding.tvBleFloodStatus.text = "Complete (${result.durationMs / 1000}s) — Risk: ${result.riskScore}/10"
@@ -313,22 +336,20 @@ class DeviceDetailActivity : AppCompatActivity() {
 
         binding.btnBleFloodStop.setOnClickListener {
             BleConnectionFlooder.stop()
-            bleFloodRunning = false
+            bleFloodRunning.set(false)
             binding.btnBleFloodStart.isEnabled = true
             binding.btnBleFloodStop.isEnabled = false
             binding.tvBleFloodStatus.text = "Stopped by user"
         }
     }
 
-    private var rfcommFloodRunning = false
-
     private fun setupRfcommFlood(dev: BluetoothDevice) {
         binding.btnRfcommFloodStop.isEnabled = false
 
         binding.btnRfcommFloodStart.setOnClickListener {
-            if (rfcommFloodRunning) return@setOnClickListener
+            if (rfcommFloodRunning.get()) return@setOnClickListener
             showLabWarning {
-                rfcommFloodRunning = true
+                rfcommFloodRunning.set(true)
                 binding.btnRfcommFloodStart.isEnabled = false
                 binding.btnRfcommFloodStop.isEnabled = true
                 binding.tvRfcommFloodStatus.text = "Initializing..."
@@ -350,7 +371,7 @@ class DeviceDetailActivity : AppCompatActivity() {
                         binding.tvRfcommFloodResults.text = summary
                     },
                     onComplete = { result ->
-                        rfcommFloodRunning = false
+                        rfcommFloodRunning.set(false)
                         binding.btnRfcommFloodStart.isEnabled = true
                         binding.btnRfcommFloodStop.isEnabled = false
                         binding.tvRfcommFloodStatus.text = "Complete (${result.durationMs / 1000}s) — Risk: ${result.riskScore}/10"
@@ -378,22 +399,20 @@ class DeviceDetailActivity : AppCompatActivity() {
 
         binding.btnRfcommFloodStop.setOnClickListener {
             RfcommBufferFlood.stop()
-            rfcommFloodRunning = false
+            rfcommFloodRunning.set(false)
             binding.btnRfcommFloodStart.isEnabled = true
             binding.btnRfcommFloodStop.isEnabled = false
             binding.tvRfcommFloodStatus.text = "Stopped by user"
         }
     }
 
-    private var gattFuzzRunning = false
-
     private fun setupGattFuzzer(dev: BluetoothDevice) {
         binding.btnGattFuzzStop.isEnabled = false
 
         binding.btnGattFuzzStart.setOnClickListener {
-            if (gattFuzzRunning) return@setOnClickListener
+            if (gattFuzzRunning.get()) return@setOnClickListener
             showLabWarning {
-                gattFuzzRunning = true
+                gattFuzzRunning.set(true)
                 binding.btnGattFuzzStart.isEnabled = false
                 binding.btnGattFuzzStop.isEnabled = true
                 binding.tvGattFuzzStatus.text = "Initializing..."
@@ -417,7 +436,7 @@ class DeviceDetailActivity : AppCompatActivity() {
                         binding.tvGattFuzzResults.text = summary
                     },
                     onComplete = { result ->
-                        gattFuzzRunning = false
+                        gattFuzzRunning.set(false)
                         binding.btnGattFuzzStart.isEnabled = true
                         binding.btnGattFuzzStop.isEnabled = false
                         binding.tvGattFuzzStatus.text = "Complete (${result.durationMs / 1000}s) — Risk: ${result.riskScore}/10"
@@ -445,7 +464,7 @@ class DeviceDetailActivity : AppCompatActivity() {
 
         binding.btnGattFuzzStop.setOnClickListener {
             BleGattFuzzer.stop()
-            gattFuzzRunning = false
+            gattFuzzRunning.set(false)
             binding.btnGattFuzzStart.isEnabled = true
             binding.btnGattFuzzStop.isEnabled = false
             binding.tvGattFuzzStatus.text = "Stopped by user"
@@ -453,7 +472,7 @@ class DeviceDetailActivity : AppCompatActivity() {
     }
 
     override fun onSupportNavigateUp(): Boolean {
-        onBackPressed()
+        finish()
         return true
     }
 

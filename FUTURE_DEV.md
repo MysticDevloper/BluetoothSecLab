@@ -26,15 +26,15 @@
 - [x] **Pairing PIN Tester** — 25 common default PINs
   - 0000, 1234, 1111, etc.
   - Bond removal capability
-- [x] **BLE Connection Flooder** (CVE-2026-52866 pattern)
+- [x] **BLE Connection Flooder** (connection slot exhaustion pattern)
   - GATT connection slot exhaustion
   - 12 rapid connections, 8s hold each
   - Auto-stop 30s
-- [x] **RFCOMM Buffer Flood** (CVE-2026-31280 pattern)
+- [x] **RFCOMM Buffer Flood** (RFCOMM resource exhaustion pattern)
   - Multi-channel buffer overflow
   - 10 channels × 4KB payloads × 20 iterations
   - Auto-stop 25s
-- [x] **BLE GATT Fuzzer** (BSFuzzer method)
+- [x] **BLE GATT Fuzzer** (BSFuzzer methodology)
   - 15 malformed payload types per characteristic
   - Crash detection via disconnect monitoring
   - Auto-stop 30s
@@ -297,11 +297,9 @@ v4.0 (PLANNED)       ← ML + Reporting
 | ESP32 BLE Arduino | github.com/espressif/arduino-esp32 |
 | NimBLE | github.com/espressif/esp-nimble |
 | Ubertooth | github.com/greatscottgadgets/ubertooth |
-| BSFuzzer Paper | USENIX 2025 |
-| CVE-2026-52866 | BLE Connection Slot Monopolization |
-| CVE-2026-31280 | RFCOMM Buffer Overflow DoS |
-| CVE-2025-36911 | WhisperPair Fast Pair Attack |
+| BSFuzzer Paper | USENIX Security 2025 — bluetoothfuzz.com |
 | Shizuku | github.com/RikkaApps/Shizuku |
+| Bluetooth Core Spec | bluetooth.com/specifications/specs |
 
 ---
 

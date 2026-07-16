@@ -22,9 +22,9 @@ import java.util.concurrent.atomic.AtomicInteger
 /**
  * BLE GATT Service Fuzzer.
  *
- * Real attack: connects to a BLE device, enumerates all GATT services/characteristics,
+ * Research implementation: connects to a BLE device, enumerates all GATT services/characteristics,
  * then attempts malformed writes, oversized payloads, and invalid operations on each.
- * Based on BSFuzzer methodology (USENIX 2025) — tests for crash-causing inputs.
+ * Methodology inspired by BSFuzzer (USENIX Security 2025) — tests for crash-causing inputs.
  *
  * No root required — uses standard Android BLE GATT API.
  *
@@ -310,9 +310,9 @@ object BleGattFuzzer {
                         title = "GATT Crash/Disconnect Detected",
                         description = "Device disconnected unexpectedly after receiving malformed GATT write. " +
                             "This indicates the BLE stack may be vulnerable to crash-causing inputs. " +
-                            "Similar to BSFuzzer findings (USENIX 2025).",
+                            "Similar to findings in BSFuzzer (USENIX Security 2025).",
                         severity = AttackResult.Severity.CRITICAL,
-                        cveReference = "BSFuzzer (USENIX 2025)",
+                        cveReference = "See: BSFuzzer (USENIX Security 2025) — bluetoothfuzz.com",
                         remediation = "Update BLE stack, validate input lengths, implement bounds checking"
                     ))
                 }

@@ -19,8 +19,8 @@ object PermissionsHelper {
             perms.add(Manifest.permission.BLUETOOTH_CONNECT)
         } else {
             perms.add(Manifest.permission.ACCESS_FINE_LOCATION)
+            perms.add(Manifest.permission.ACCESS_COARSE_LOCATION)
         }
-        perms.add(Manifest.permission.ACCESS_FINE_LOCATION)
         return perms.toTypedArray()
     }
 

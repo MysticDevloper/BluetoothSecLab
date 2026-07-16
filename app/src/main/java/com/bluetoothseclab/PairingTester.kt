@@ -1,6 +1,7 @@
 package com.bluetoothseclab
 
 import android.bluetooth.BluetoothDevice
+import android.os.Build
 import java.lang.reflect.Method
 
 data class PairingResult(
@@ -10,6 +11,8 @@ data class PairingResult(
 )
 
 object PairingTester {
+
+    private const val PIN_DELAY_MS = 2000L
 
     private val commonPins = listOf(
         "0000", "1234", "1111", "0001", "9999",
@@ -21,13 +24,26 @@ object PairingTester {
 
     fun testCommonPins(device: BluetoothDevice, callback: (PairingResult) -> Unit) {
         for (pin in commonPins) {
+            if (device.bondState == BluetoothDevice.BOND_BONDED) {
+                callback(PairingResult(pin, true, "Device already bonded"))
+                break
+            }
             val result = tryPair(device, pin)
             callback(result)
             if (result.success) break
+            try {
+                Thread.sleep(PIN_DELAY_MS)
+            } catch (_: InterruptedException) {
+                break
+            }
         }
     }
 
     private fun tryPair(device: BluetoothDevice, pin: String): PairingResult {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            return PairingResult(pin, false, "PIN testing restricted on Android 12+")
+        }
+
         return try {
             val setPinMethod: Method? = device.javaClass.getMethod("setPin", ByteArray::class.java)
             if (setPinMethod != null) {
@@ -48,6 +64,9 @@ object PairingTester {
     }
 
     fun attemptPairing(device: BluetoothDevice): Boolean {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            return false
+        }
         return try {
             val method: Method? = device.javaClass.getMethod("createBond")
             method?.invoke(device) as? Boolean ?: false
@@ -57,6 +76,9 @@ object PairingTester {
     }
 
     fun removeBond(device: BluetoothDevice): Boolean {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            return false
+        }
         return try {
             val method: Method? = device.javaClass.getMethod("removeBond")
             method?.invoke(device) as? Boolean ?: false

@@ -17,11 +17,14 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
- * BLE Connection Slot Exhaustion DoS (CVE-2026-52866 pattern).
+ * BLE Connection Slot Exhaustion DoS.
  *
- * Real attack: rapidly opens GATT connections to exhaust the target's BLE client
+ * Research pattern: rapidly opens GATT connections to exhaust the target's BLE client
  * connection slots. Most BLE devices support only 3-7 simultaneous connections.
  * By opening and holding connections, legitimate devices are blocked.
+ *
+ * Documented in Bluetooth Core Specification §4.4 regarding connection limits,
+ * and in academic research on BLE DoS (e.g., IoT Journal 2023).
  *
  * No root required — uses standard Android BLE GATT API.
  *
@@ -226,7 +229,7 @@ object BleConnectionFlooder {
                         description = "Successfully opened ${connectSuccesses.get()} simultaneous GATT connections. " +
                             "Most BLE devices support 3-7 connections. Legitimate devices would be blocked.",
                         severity = AttackResult.Severity.CRITICAL,
-                        cveReference = "CVE-2026-52866 (pattern)",
+                        cveReference = "BLE connection slot exhaustion (documented in academic research)",
                         remediation = "Limit simultaneous connections, implement connection rate limiting"
                     ))
                 }

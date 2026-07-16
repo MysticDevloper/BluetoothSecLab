@@ -6,7 +6,7 @@
 ![Kotlin](https://img.shields.io/badge/Kotlin-1.9-7F52FF?style=for-the-badge&logo=kotlin&logoColor=white)
 ![API](https://img.shields.io/badge/API-34-4CAF50?style=for-the-badge)
 ![License](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)
-![Status](https://img.shields.io/badge/Status-Active-brightgreen?style=for-the-badge)
+![Status](https://img.shields.io/badge/Status-v1.1-brightgreen?style=for-the-badge)
 
 <br/>
 
@@ -16,7 +16,7 @@
 
 <br/>
 
-[**⬇ DOWNLOAD APK (7.4 MB)**](BTSecurityLab-v1.0-debug.apk) · [**📖 DOCS**](#-quick-start) · [**🔧 BUILD**](#-build-from-source) · [**🗺 ROADMAP**](FUTURE_DEV.md)
+[**📖 DOCS**](#-quick-start) · [**🔧 BUILD**](#-build-from-source) · [**🗺 ROADMAP**](FUTURE_DEV.md)
 
 </div>
 
@@ -165,11 +165,11 @@ Testing 25 Common Default PINs:
 </details>
 
 <details open>
-<summary><b>💥 BLE Connection Flooder</b> <code>CVE-2026-52866</code></summary>
+<summary><b>💥 BLE Connection Flooder</b> <code>Connection Slot Exhaustion</code></summary>
 
 <br/>
 
-> **Real attack** — exhausts target's BLE connection slots via rapid GATT connections.
+> **Research pattern** — exhausts target's BLE connection slots via rapid GATT connections.
 > No root required. Auto-stops after 30 seconds.
 
 ```
@@ -181,7 +181,7 @@ Attack Flow:
 
 Target: Most BLE devices support 3-7 connections
 Result: Legitimate devices blocked from connecting
-CVE Pattern: CVE-2026-52866 (connection slot monopolization)
+Reference: BLE connection slot exhaustion (academic research)
 ```
 
 | Metric | Value |
@@ -195,11 +195,11 @@ CVE Pattern: CVE-2026-52866 (connection slot monopolization)
 </details>
 
 <details open>
-<summary><b>💣 RFCOMM Buffer Flood</b> <code>CVE-2026-31280</code></summary>
+<summary><b>💣 RFCOMM Buffer Flood</b> <code>Buffer Exhaustion</code></summary>
 
 <br/>
 
-> **Real attack** — opens multiple RFCOMM channels and floods with 4KB payloads
+> **Research pattern** — opens multiple RFCOMM channels and floods with 4KB payloads
 > to exhaust the target's RFCOMM buffer space. No root required.
 
 ```
@@ -210,8 +210,8 @@ Attack Flow:
 └──────────────┘    └──────────────────┘    └──────────────────┘
 
 Target: Legacy Bluetooth stacks with limited RFCOMM buffers
-Result: Device freeze or reboot (CVE-2026-31280 confirmed)
-CVE Pattern: CVE-2026-31280 (Parani M10 RFCOMM DoS)
+Result: Device freeze or unresponsiveness under load
+Reference: RFCOMM resource exhaustion (documented in BT SIG advisories)
 ```
 
 | Metric | Value |
@@ -230,9 +230,9 @@ CVE Pattern: CVE-2026-31280 (Parani M10 RFCOMM DoS)
 
 <br/>
 
-> **Real attack** — enumerates all GATT services/characteristics, then fuzzes
+> **Research implementation** — enumerates all GATT services/characteristics, then fuzzes
 > writable characteristics with malformed payloads (empty, oversized, null-byte,
-> AT injection, HTTP injection). Based on BSFuzzer methodology (USENIX 2025).
+> AT injection, HTTP injection). Methodology inspired by BSFuzzer (USENIX Security 2025).
 
 ```
 Attack Flow:
@@ -444,13 +444,18 @@ cd BluetoothSecLab
 # Debug build
 ./gradlew assembleDebug
 
-# Release build (requires signing config)
+# Release build (requires signing config in env vars)
+export KEYSTORE_PATH=release.keystore
+export KEYSTORE_PASSWORD=your_password
+export KEY_ALIAS=your_alias
+export KEY_PASSWORD=your_key_password
 ./gradlew assembleRelease
 ```
 
 ### Output
 ```
-app/build/outputs/apk/debug/app-debug.apk     (7.4 MB)
+app/build/outputs/apk/debug/app-debug.apk
+app/build/outputs/apk/release/app-release.apk
 ```
 
 </td>

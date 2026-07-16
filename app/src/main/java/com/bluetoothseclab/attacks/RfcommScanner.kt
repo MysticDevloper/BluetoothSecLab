@@ -218,6 +218,7 @@ object RfcommScanner {
     ): List<Pair<String, ProfileInfo>> {
         val result = mutableListOf<Pair<String, ProfileInfo>>()
         val latch = CountDownLatch(1)
+        var receiverRegistered = false
         val receiver = object : BroadcastReceiver() {
             @Suppress("DEPRECATION")
             override fun onReceive(ctx: Context, intent: Intent) {
@@ -240,6 +241,7 @@ object RfcommScanner {
 
         try {
             context.registerReceiver(receiver, IntentFilter(BluetoothDevice.ACTION_UUID))
+            receiverRegistered = true
         } catch (_: Exception) {
             return result
         }
@@ -248,7 +250,9 @@ object RfcommScanner {
             latch.await(SDP_WAIT_MS, TimeUnit.MILLISECONDS)
         } catch (_: Exception) {
         } finally {
-            try { context.unregisterReceiver(receiver) } catch (_: Exception) {}
+            if (receiverRegistered) {
+                try { context.unregisterReceiver(receiver) } catch (_: Exception) {}
+            }
         }
         return result
     }
@@ -310,16 +314,18 @@ object RfcommScanner {
             ok = probe(socket, "Secure")
             try { socket.close() } catch (_: Exception) {}
         } catch (_: IOException) {
-            try {
-                val method = device.javaClass.getDeclaredMethod(
-                    "createInsecureRfcommSocketToServiceRecord", UUID::class.java
-                )
-                method.setAccessible(true)
-                val socket = method.invoke(device, uuid) as BluetoothSocket
-                socket.connect()
-                ok = probe(socket, "Insecure")
-                try { socket.close() } catch (_: Exception) {}
-            } catch (_: Exception) {}
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
+                try {
+                    val method = device.javaClass.getDeclaredMethod(
+                        "createInsecureRfcommSocketToServiceRecord", UUID::class.java
+                    )
+                    method.isAccessible = true
+                    val socket = method.invoke(device, uuid) as BluetoothSocket
+                    socket.connect()
+                    ok = probe(socket, "Insecure")
+                    try { socket.close() } catch (_: Exception) {}
+                } catch (_: Exception) {}
+            }
         }
 
         if (!ok) return null
@@ -350,6 +356,10 @@ object RfcommScanner {
      * Try raw RFCOMM channel, if connected — send probes and read response.
      */
     private fun probeRawChannel(device: BluetoothDevice, channel: Int): RfcommPort? {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            return null
+        }
+
         val log = mutableListOf<String>()
         var sentBytes: ByteArray? = null
         var receivedBytes: ByteArray? = null
@@ -361,7 +371,7 @@ object RfcommScanner {
             } catch (_: NoSuchMethodException) {
                 device.javaClass.getDeclaredMethod("createInsecureRfcommSocket", Int::class.java)
             }
-            createMethod.setAccessible(true)
+            createMethod.isAccessible = true
             socket = createMethod.invoke(device, channel) as BluetoothSocket
             socket.connect()
             log.add("[CH $channel] Socket connected")

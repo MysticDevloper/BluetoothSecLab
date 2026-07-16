@@ -22,27 +22,38 @@ object ServiceEnumerator {
     }
 
     private val knownProfiles = mapOf(
-        "0000110" to "SPP (Serial Port Profile)",
+        "00001101" to "SPP (Serial Port Profile)",
         "00001115" to "PAN (Personal Area Network)",
         "0000110A" to "A2DP (Audio Sink)",
         "0000110B" to "A2DP (Audio Source)",
         "0000110C" to "AVRCP (Remote Control)",
-        "0000110D" to "HFP (Hands-Free)",
-        "0000110E" to "HFP AG (Audio Gateway)",
+        "0000110D" to "AVRCP (Controller)",
+        "0000110E" to "AVRCP (Target)",
+        "0000110F" to "HFP (Hands-Free)",
+        "00001110" to "HFP AG (Audio Gateway)",
         "00001108" to "HSP (Headset)",
+        "00001109" to "HSP-AG (Headset AG)",
         "00001112" to "HID (Human Interface Device)",
-        "00001124" to "HID Service",
+        "00001124" to "HID Service (BLE)",
         "00001116" to "OBEX Push",
         "00001105" to "OBEX Sync",
+        "00001106" to "OBEX File Transfer",
         "00001119" to "DUN (Dial-Up Networking)",
-        "00001101" to "Serial Port",
         "00001103" to "DIP (Device ID Profile)",
+        "00001104" to "FAX",
+        "00001111" to "WAP (Wireless Application Protocol)",
+        "00001117" to "NAP (Network Access Point)",
+        "00001118" to "GN (Group Network)",
+        "0000111E" to "HCRP (Hardcopy Cable Replacement)",
+        "0000112D" to "SAP (SIM Access)",
+        "00001130" to "PBAP (Phone Book Access)",
+        "00001132" to "MAP (Message Access)",
+        "00001134" to "MAP MCE",
         "00001800" to "GAP (Generic Access)",
         "00001801" to "GATT (Generic Attribute)",
         "0000180A" to "Device Information",
         "0000180F" to "Battery Service",
-        "00001812" to "Human Interface Device (BLE)",
-        "00010000" to "LE Secure Connections"
+        "00001812" to "HID Service (BLE)"
     )
 
     fun resolveProfileName(uuid: String): String {

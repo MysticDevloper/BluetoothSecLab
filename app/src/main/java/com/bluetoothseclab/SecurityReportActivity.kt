@@ -2,6 +2,7 @@ package com.bluetoothseclab
 
 import android.content.Intent
 import android.os.Bundle
+import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import com.bluetoothseclab.databinding.ActivitySecurityReportBinding
 import java.text.SimpleDateFormat
@@ -18,6 +19,12 @@ class SecurityReportActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
+
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                finish()
+            }
+        })
 
         val deviceName = intent.getStringExtra("report_device_name") ?: "Unknown"
         val deviceAddress = intent.getStringExtra("report_device_address") ?: ""
@@ -40,7 +47,7 @@ class SecurityReportActivity : AppCompatActivity() {
 
             // Environment info
             appendLine("--- Assessment Environment ---")
-            appendLine("Tool: BT Security Lab v1.0")
+            appendLine("Tool: BT Security Lab v1.1")
             appendLine("Platform: Android")
             appendLine("Type: Passive scanning (no active exploitation)")
             appendLine()
@@ -107,7 +114,7 @@ class SecurityReportActivity : AppCompatActivity() {
     }
 
     override fun onSupportNavigateUp(): Boolean {
-        onBackPressed()
+        finish()
         return true
     }
 }

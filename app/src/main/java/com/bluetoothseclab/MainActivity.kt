@@ -8,6 +8,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import androidx.lifecycle.ViewModelProvider
 import com.bluetoothseclab.databinding.ActivityMainBinding
 import com.bluetoothseclab.models.BluetoothDeviceInfo
 import com.google.android.material.snackbar.Snackbar
@@ -16,21 +17,15 @@ import com.google.android.material.tabs.TabLayoutMediator
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
-    private val classicDevices = mutableListOf<BluetoothDeviceInfo>()
-    private val bleDevices = mutableListOf<BluetoothDeviceInfo>()
+    private lateinit var viewModel: ScanViewModel
 
     private var classicScanner: BluetoothScanner? = null
     private var bleScanner: BLEScanner? = null
-    private var isClassicScanning = false
-    private var isBleScanning = false
 
     companion object {
         private const val PERMISSION_REQUEST_CODE = 100
         private const val BLUETOOTH_SETTINGS_CODE = 200
         private const val LOCATION_SETTINGS_CODE = 300
-
-        private var pendingClassicScan = false
-        private var pendingBleScan = false
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -38,11 +33,13 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        viewModel = ViewModelProvider(this)[ScanViewModel::class.java]
+
         setSupportActionBar(binding.toolbar)
 
         checkPrerequisites()
 
-        val adapter = DevicePagerAdapter(classicDevices, bleDevices) { device ->
+        val adapter = DevicePagerAdapter(viewModel.classicDevices, viewModel.bleDevices) { device ->
             val intent = Intent(this, DeviceDetailActivity::class.java).apply {
                 putExtra("device_name", device.name)
                 putExtra("device_address", device.address)
@@ -55,45 +52,45 @@ class MainActivity : AppCompatActivity() {
 
         binding.viewPager.adapter = adapter
         TabLayoutMediator(binding.tabLayout, binding.viewPager) { tab, position ->
-            tab.text = if (position == 0) "Classic (${classicDevices.size})" else "BLE (${bleDevices.size})"
+            tab.text = if (position == 0) "Classic (${viewModel.classicDevices.size})" else "BLE (${viewModel.bleDevices.size})"
         }.attach()
 
         binding.btnScanClassic.setOnClickListener {
             if (!PermissionsHelper.allGranted(this)) {
                 ActivityCompat.requestPermissions(this, PermissionsHelper.getRequiredPermissions(), PERMISSION_REQUEST_CODE)
-                pendingClassicScan = true
+                viewModel.pendingClassicScan = true
                 return@setOnClickListener
             }
             if (!PermissionsHelper.isLocationEnabled(this)) {
                 showLocationDialog()
-                pendingClassicScan = true
+                viewModel.pendingClassicScan = true
                 return@setOnClickListener
             }
             if (!PermissionsHelper.isBluetoothEnabled()) {
                 showBluetoothDialog()
-                pendingClassicScan = true
+                viewModel.pendingClassicScan = true
                 return@setOnClickListener
             }
-            if (isClassicScanning) stopClassicScan() else startClassicScan()
+            if (viewModel.isClassicScanning) stopClassicScan() else startClassicScan()
         }
 
         binding.btnScanBLE.setOnClickListener {
             if (!PermissionsHelper.allGranted(this)) {
                 ActivityCompat.requestPermissions(this, PermissionsHelper.getRequiredPermissions(), PERMISSION_REQUEST_CODE)
-                pendingBleScan = true
+                viewModel.pendingBleScan = true
                 return@setOnClickListener
             }
             if (!PermissionsHelper.isLocationEnabled(this)) {
                 showLocationDialog()
-                pendingBleScan = true
+                viewModel.pendingBleScan = true
                 return@setOnClickListener
             }
             if (!PermissionsHelper.isBluetoothEnabled()) {
                 showBluetoothDialog()
-                pendingBleScan = true
+                viewModel.pendingBleScan = true
                 return@setOnClickListener
             }
-            if (isBleScanning) stopBleScan() else startBleScan()
+            if (viewModel.isBleScanning) stopBleScan() else startBleScan()
         }
 
         binding.toolbar.setOnMenuItemClickListener { item ->
@@ -140,7 +137,7 @@ class MainActivity : AppCompatActivity() {
     private fun showLocationDialog() {
         AlertDialog.Builder(this)
             .setTitle("Enable Location")
-            .setMessage("Android requires Location to be ON for Bluetooth scanning. Your location is NOT tracked or stored.")
+            .setMessage("Android requires Location to be ON for Bluetooth scanning (API < 31). Your location is NOT tracked or stored.")
             .setPositiveButton("Settings") { _, _ ->
                 startActivityForResult(PermissionsHelper.getLocationSettingsIntent(), LOCATION_SETTINGS_CODE)
             }
@@ -157,18 +154,18 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun retryPendingScan() {
-        if (pendingClassicScan && PermissionsHelper.isBluetoothEnabled() && PermissionsHelper.isLocationEnabled(this)) {
-            pendingClassicScan = false
+        if (viewModel.pendingClassicScan && PermissionsHelper.isBluetoothEnabled() && PermissionsHelper.isLocationEnabled(this)) {
+            viewModel.pendingClassicScan = false
             startClassicScan()
         }
-        if (pendingBleScan && PermissionsHelper.isBluetoothEnabled() && PermissionsHelper.isLocationEnabled(this)) {
-            pendingBleScan = false
+        if (viewModel.pendingBleScan && PermissionsHelper.isBluetoothEnabled() && PermissionsHelper.isLocationEnabled(this)) {
+            viewModel.pendingBleScan = false
             startBleScan()
         }
     }
 
     private fun startClassicScan() {
-        classicDevices.clear()
+        viewModel.clearClassicDevices()
         binding.tvStatus.text = "Scanning Classic (auto-refresh until stopped)…"
         binding.progressBar.visibility = android.view.View.VISIBLE
 
@@ -176,26 +173,24 @@ class MainActivity : AppCompatActivity() {
             context = this,
             onDeviceFound = { device, rssi, name ->
                 val displayName = name ?: device.name ?: "Unknown"
-                if (classicDevices.none { it.address == device.address }) {
-                    classicDevices.add(
-                        BluetoothDeviceInfo(
-                            name = displayName,
-                            address = device.address,
-                            type = device.type,
-                            bondState = device.bondState,
-                            isBle = false,
-                            rssi = rssi
-                        )
-                    )
+                val deviceInfo = BluetoothDeviceInfo(
+                    name = displayName,
+                    address = device.address,
+                    type = device.type,
+                    bondState = device.bondState,
+                    isBle = false,
+                    rssi = rssi
+                )
+                if (viewModel.addClassicDeviceIfAbsent(deviceInfo)) {
                     (binding.viewPager.adapter as? DevicePagerAdapter)?.notifyPageItemInserted(0)
                     updateTabTitles()
                 }
             },
             onScanStateChange = { scanning ->
-                isClassicScanning = scanning
+                viewModel.isClassicScanning = scanning
                 binding.btnScanClassic.text = if (scanning) "⏹ Stop Classic" else "▶ Scan Classic"
-                binding.progressBar.visibility = if (scanning || isBleScanning) android.view.View.VISIBLE else android.view.View.GONE
-                binding.tvStatus.text = if (scanning) "Scanning Classic (${classicDevices.size} found)…" else "Classic scan stopped — ${classicDevices.size} devices"
+                binding.progressBar.visibility = if (scanning || viewModel.isBleScanning) android.view.View.VISIBLE else android.view.View.GONE
+                binding.tvStatus.text = if (scanning) "Scanning Classic (${viewModel.classicDevices.size} found)…" else "Classic scan stopped — ${viewModel.classicDevices.size} devices"
             }
         )
         classicScanner?.startScan()
@@ -207,7 +202,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun startBleScan() {
-        bleDevices.clear()
+        viewModel.clearBleDevices()
         binding.tvStatus.text = "Scanning BLE (continuous)…"
         binding.progressBar.visibility = android.view.View.VISIBLE
 
@@ -215,26 +210,24 @@ class MainActivity : AppCompatActivity() {
             onDeviceFound = { result: ScanResult, name ->
                 val device = result.device
                 val displayName = name ?: device.name ?: "Unknown"
-                if (bleDevices.none { it.address == device.address }) {
-                    bleDevices.add(
-                        BluetoothDeviceInfo(
-                            name = displayName,
-                            address = device.address,
-                            type = device.type,
-                            bondState = device.bondState,
-                            isBle = true,
-                            rssi = result.rssi
-                        )
-                    )
+                val deviceInfo = BluetoothDeviceInfo(
+                    name = displayName,
+                    address = device.address,
+                    type = device.type,
+                    bondState = device.bondState,
+                    isBle = true,
+                    rssi = result.rssi
+                )
+                if (viewModel.addBleDeviceIfAbsent(deviceInfo)) {
                     (binding.viewPager.adapter as? DevicePagerAdapter)?.notifyPageItemInserted(1)
                     updateTabTitles()
                 }
             },
             onScanStateChange = { scanning ->
-                isBleScanning = scanning
+                viewModel.isBleScanning = scanning
                 binding.btnScanBLE.text = if (scanning) "⏹ Stop BLE" else "▶ Scan BLE"
-                binding.progressBar.visibility = if (scanning || isClassicScanning) android.view.View.VISIBLE else android.view.View.GONE
-                binding.tvStatus.text = if (scanning) "Scanning BLE (${bleDevices.size} found)…" else "BLE scan stopped — ${bleDevices.size} devices"
+                binding.progressBar.visibility = if (scanning || viewModel.isClassicScanning) android.view.View.VISIBLE else android.view.View.GONE
+                binding.tvStatus.text = if (scanning) "Scanning BLE (${viewModel.bleDevices.size} found)…" else "BLE scan stopped — ${viewModel.bleDevices.size} devices"
             }
         )
         bleScanner?.startScan()
@@ -247,13 +240,13 @@ class MainActivity : AppCompatActivity() {
 
     private fun updateTabTitles() {
         val tabCount = binding.tabLayout.tabCount
-        if (tabCount >= 1) binding.tabLayout.getTabAt(0)?.text = "Classic (${classicDevices.size})"
-        if (tabCount >= 2) binding.tabLayout.getTabAt(1)?.text = "BLE (${bleDevices.size})"
+        if (tabCount >= 1) binding.tabLayout.getTabAt(0)?.text = "Classic (${viewModel.classicDevices.size})"
+        if (tabCount >= 2) binding.tabLayout.getTabAt(1)?.text = "BLE (${viewModel.bleDevices.size})"
     }
 
     private fun showAboutDialog() {
         AlertDialog.Builder(this)
-            .setTitle("BT Security Lab v1.0")
+            .setTitle("BT Security Lab v1.1")
             .setMessage("A Bluetooth security assessment tool for authorized testing and research.\n\nFor educational and research purposes only.")
             .setPositiveButton("OK", null)
             .show()
@@ -273,3 +266,4 @@ class MainActivity : AppCompatActivity() {
         super.onDestroy()
     }
 }
+
